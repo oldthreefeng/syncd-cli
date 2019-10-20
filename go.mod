@@ -3,6 +3,7 @@ module gogs.wangke.co/go/syncd-cli
 go 1.13
 
 require (
+	github.com/dreamans/syncd v0.0.0-20190902024731-92f0ff103e09
 	github.com/elazarl/goproxy v0.0.0-20191011121108-aa519ddbe484 // indirect
 	github.com/parnurzeal/gorequest v0.2.16
 	github.com/pkg/errors v0.8.1 // indirect
