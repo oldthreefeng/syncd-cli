@@ -54,6 +54,6 @@ func readFromFile(file string)  {
 }
 
 func main() {
-	readFromFile("testserver.log")
-	readFromFile("testuser.log")
+	readFromFile("testserver")
+	readFromFile("testuser")
 }
