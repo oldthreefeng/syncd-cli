@@ -265,14 +265,14 @@ func main() {
 	login(user, password)
 
 	// 是否列出server,user
-	if Ips[0] == "" {
-		return
-	}
 	switch list {
 	case "user":
 		List("api/user/list")
 	case "server":
 		List("api/server/list")
+	}
+	if Ips[0] == "" {
+		return
 	}
 	switch add {
 	case "user":
