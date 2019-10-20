@@ -236,11 +236,10 @@ Options:
 }
 
 func init() {
-	//flag.StringVarP(&host, "hostApi", "a", "http://127.0.0.1:8878/", "sycnd server addr api")
-	flag.StringVarP(&host, "hostApi", "a", "https://syncd.fenghong.tech/", "sycnd server addr api")
+	flag.StringVarP(&host, "hostApi", "a", "http://127.0.0.1:8878/", "sycnd server addr api")
+	//flag.StringVarP(&host, "hostApi", "a", "https://syncd.fenghong.tech/", "sycnd server addr api")
 	flag.StringVarP(&user, "user", "u", "syncd", "user for syncd tools")
-	flag.StringVarP(&password, "password", "p", "hf362632901", "password for syncd tools")
-	//flag.StringVarP(&password, "password", "p", "111111", "password for syncd tools")
+	flag.StringVarP(&password, "password", "p", "111111", "password for syncd tools")
 
 	//flag.StringVarP(&add, "add", "d", "", "add user or server")
 	flag.StringVarP(&files, "file", "f", "", "add server/user from files")
