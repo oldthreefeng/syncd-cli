@@ -10,6 +10,7 @@ Copyright 2019 louis.
 package main
 
 import (
+	"bufio"
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
@@ -39,6 +40,7 @@ var (
 	Ips      []string
 	SSHPort  []int
 	add      string
+	files 	 string
 	h        bool
 )
 
@@ -216,22 +218,17 @@ func authCookie() *http.Cookie {
 }
 
 func usages() {
-	_, _ = fmt.Fprintf(os.Stderr, `syncd-cli version:1.0.0
-Usage syncd-cli <command> [-aupginsh] 
+	_, _ = fmt.Fprintf(os.Stderr, `syncd-cli version:1.1.0
+Usage syncd-cli <command> [-afhpu] 
 
-command [--add] [--list]  [user|server]
+command <apply>|<get>  [user|server] <?-f files>
 
 add server example: 
-	1) syncd-cli -d server -u syncd -p 111111  -g 2 -i 192.168.1.1,test.example.com -n test01,test02 -s 9527,22
-	2) syncd-cli --add server  --user syncd --password 111111 --roleGroupId 2 --ipEmail 192.168.1.1 --names test01 --sshPort 9527
-add user example:
-	1) syncd-cli --add user --user syncd --password 111111  --roleGroupId 1 --ipEmail text@wangke.co --names test01
-	2) syncd-cli  -d user -u syncd -p 111111 -g 1 -i text@wangke.co -n test01
+	1) syncd-cli apply user -f files
+	2) syncd-cli apply server -f files
 list server and user example:
-	1) syncd-cli -l user -u syncd -p 111111 
-	2) syncd-cli -l server -u syncd -p 111111
-	3) syncd-cli --list user --user syncd --password 111111
-	4) syncd-cli --list server --user syncd --password 111111
+	1) syncd-cli get user
+	2) syncd-cli get server
 
 Options:
 `)
@@ -239,19 +236,59 @@ Options:
 }
 
 func init() {
-	flag.StringVarP(&host, "hostApi", "a", "http://127.0.0.1:8878/", "sycnd server addr api")
-	//flag.StringVarP(&host, "hostApi", "a", "https://syncd.fenghong.tech/", "sycnd server addr api")
+	//flag.StringVarP(&host, "hostApi", "a", "http://127.0.0.1:8878/", "sycnd server addr api")
+	flag.StringVarP(&host, "hostApi", "a", "https://syncd.fenghong.tech/", "sycnd server addr api")
 	flag.StringVarP(&user, "user", "u", "syncd", "user for syncd tools")
-	flag.StringVarP(&password, "password", "p", "111111", "password for syncd tools")
+	flag.StringVarP(&password, "password", "p", "hf362632901", "password for syncd tools")
+	//flag.StringVarP(&password, "password", "p", "111111", "password for syncd tools")
 
-	flag.StringVarP(&add, "add", "d", "", "add user or server")
-	flag.StringVarP(&list, "list", "l", "", "list server and user")
-	flag.IntVarP(&GroupId, "roleGroupId", "g", 1, "group_id for cluster // or role_id for user, must be needed")
-	flag.StringSliceVarP(&Ips, "ipEmail", "i", []string{""}, "set ip/hostname to the cluster with names // or email for add user, use ',' to split")
-	flag.StringSliceVarP(&Names, "names", "n", []string{""}, "set names to the cluster with ips, use ',' to split")
-	flag.IntSliceVarP(&SSHPort, "sshPort", "s", []int{}, "set sshPort to the cluster, use ',' to split")
+	//flag.StringVarP(&add, "add", "d", "", "add user or server")
+	flag.StringVarP(&files, "file", "f", "", "add server/user from files")
+	//flag.StringVarP(&list, "list", "l", "", "list server and user")
+	//flag.IntVarP(&GroupId, "roleGroupId", "g", 1, "group_id for cluster // or role_id for user, must be needed")
+	//flag.StringSliceVarP(&Ips, "ipEmail", "i", []string{""}, "set ip/hostname to the cluster with names // or email for add user, use ',' to split")
+	//flag.StringSliceVarP(&Names, "names", "n", []string{""}, "set names to the cluster with ips, use ',' to split")
+	//flag.IntSliceVarP(&SSHPort, "sshPort", "s", []int{}, "set sshPort to the cluster, use ',' to split")
 	flag.BoolVarP(&h, "help", "h", false, "this help")
 	flag.Usage = usages
+}
+
+type server struct {
+	gid  int
+	name string
+	ip   string
+	port int
+}
+
+func readFromServerFile(file string) []server {
+	openFile, err := os.Open(file)
+	if err != nil {
+		panic(err)
+	}
+	defer openFile.Close()
+	var newserver []server
+	scanner := bufio.NewScanner(openFile)
+	scanner.Split(bufio.ScanLines)
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		if len(line) == 0 {
+			break
+		}
+		var gid, port int
+		var name, ip string
+		_, err := fmt.Sscanf(line, "%d %s %s %d", &gid, &name, &ip, &port)
+		if err != nil {
+			return nil
+		}
+		newserver = append(newserver, server{
+			gid:  gid,
+			name: name,
+			ip:   ip,
+			port: port,
+		})
+	}
+	return newserver
 }
 
 func main() {
@@ -264,26 +301,62 @@ func main() {
 	// 登录认证
 	login(user, password)
 
+	switch os.Args[1] {
+	case "apply":
+		switch os.Args[2] {
+		case "server":
+			ser := readFromServerFile(files)
+			for _, v := range ser {
+				serverAdd(v.gid,v.name,v.ip,v.port)
+			}
+		case "user":
+			usr := readFromServerFile(files)
+			for _,v := range usr {
+				// 偷个懒, 数据类型一样,结构一样, 所以从文件读取的是一样的
+				// v.gid ==> roleId
+				// v.name==> username
+				// v.ip  ==> email
+				// v.port==> status
+				userAdd(v.gid,v.name,v.ip,v.port)
+			}
+		default:
+			fmt.Println("syncd-cli apply [user|server] -f files")
+		}
+
+	case "get":
+		switch os.Args[2] {
+		case "user":
+			List("api/user/list")
+		case "server":
+			List("api/server/list")
+		default:
+			fmt.Println("syncd get [user | server]")
+		}
+	default:
+		fmt.Println("syncd-cli <get|apply> <user|server> -f filename")
+		fmt.Println("syncd-cli <get|apply> <user|server> --files filename")
+	}
+
 	// 是否列出server,user
-	switch list {
-	case "user":
-		List("api/user/list")
-	case "server":
-		List("api/server/list")
-	}
-	if Ips[0] == "" {
-		return
-	}
-	switch add {
-	case "user":
-		// userAdd() //easy to add
-		for k,v := range Ips {
-			userAdd(GroupId,Names[k],v,1)
-		}
-	case "server":
-		// Ips未指定,则返回
-		for k, v := range Ips {
-			serverAdd(GroupId, Names[k], v, SSHPort[k])
-		}
-	}
+	//switch list {
+	//case "user":
+	//	List("api/user/list")
+	//case "server":
+	//	List("api/server/list")
+	//}
+	//if Ips[0] == "" {
+	//	return
+	//}
+	//switch add {
+	//case "user":
+	//	// userAdd() //easy to add
+	//	for k, v := range Ips {
+	//		userAdd(GroupId, Names[k], v, 1)
+	//	}
+	//case "server":
+	//	// Ips未指定,则返回
+	//	for k, v := range Ips {
+	//		serverAdd(GroupId, Names[k], v, SSHPort[k])
+	//	}
+	//}
 }

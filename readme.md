@@ -59,11 +59,33 @@ Options:
   -s, --sshPort ints      set sshPort to the cluster server, use ',' to split
   -u, --user string       user for syncd tools (default "syncd")
 
+@v1.1.0  
+$ go run syncd-cli.go -h
+syncd-cli version:1.1.0
+Usage syncd-cli <command> [-afhpu]
+
+command <apply> <get>  [user|server] <?-f files>
+
+add server example:
+        1) syncd-cli apply user -f files
+        2) syncd-cli apply server -f files
+list server and user example:
+        1) syncd-cli get user
+        2) syncd-cli get server
+
+Options:
+  -f, --file string       add server/user from files
+  -h, --help              this help
+  -a, --hostApi string    sycnd server addr api (default "http://127.0.0.1:8878")
+  -p, --password string   password for syncd tools (default "111111")
+  -u, --user string       user for syncd tools (default "syncd")
+  
+
 ```
 
 
 ## example
-``` 
+```shell
 root@master-louis: ~/go/src/github.com/oldthreefeng/syncd-cli master ⚡
 # ./syncd-cli -i 192.168.1.2,text.example.com -n test1,texte -s 9527,22              [12:18:58]
 INFO[0000] your token is under .syncd-token             
@@ -78,6 +100,31 @@ time="2019-10-20T17:59:08+08:00" level=info msg="your token is under .syncd-toke
 time="2019-10-20T17:59:08+08:00" level=info msg="role_id=1&username=test01&password=1111111&email=text@wangke.co&status=1"
 time="2019-10-20T17:59:08+08:00" level=info msg="{\"code\":0,\"message\":\"success\"}"
 
+@v1.1.0
+# 采用从文件读取方式创建server
+$ go run syncd-cli.go apply server -f test.log
+time="2019-10-21T00:25:03+08:00" level=info msg="your token is under .syncd-token\n"
+time="2019-10-21T00:25:03+08:00" level=info msg="group_id=1&name=test01&ip=test.wangke.co&ssh_port=22\n"
+time="2019-10-21T00:25:03+08:00" level=info msg="{\"code\":0,\"message\":\"success\"}"
+time="2019-10-21T00:25:03+08:00" level=info msg="group_id=1&name=test02&ip=test01.wangke.co&ssh_port=9527\n"
+time="2019-10-21T00:25:03+08:00" level=info msg="{\"code\":0,\"message\":\"success\"}"
+time="2019-10-21T00:25:04+08:00" level=info msg="group_id=1&name=test03&ip=test02.wangke.co&ssh_port=6822\n"
+time="2019-10-21T00:25:04+08:00" level=info msg="{\"code\":0,\"message\":\"success\"}"
+
+$ go run syncd-cli.go apply user -f testuser.log
+time="2019-10-21T00:27:03+08:00" level=info msg="your token is under .syncd-token\n"
+time="2019-10-21T00:27:03+08:00" level=info msg="role_id=1&username=test01&password=111111&email=test01@wangke.co&status=1"
+time="2019-10-21T00:27:03+08:00" level=info msg="{\"code\":0,\"message\":\"success\"}"
+time="2019-10-21T00:27:03+08:00" level=info msg="role_id=1&username=test02&password=111111&email=test02@wangke.co&status=1"
+time="2019-10-21T00:27:03+08:00" level=info msg="{\"code\":0,\"message\":\"success\"}"
+
+$ go run syncd-cli.go get user
+[map[ctime:0 email:louis@wangke.co id:2 last_login_ip: last_login_time:0 mobile: password: role_id:1 role_name:管理员 salt: status:1 truename: username:louis] map[ctime:0 email: id:1 last_login_ip: last_login_time:0 mobile: password: role_id:1 role_name:管理员 salt: status:1 truename: username:syncd]]
+2
+
+$ go run syncd-cli.go get server
+[map[ctime:1.571545269e+09 group_id:1 group_name:aliyun id:5 ip:text.example.com name:texte ssh_port:22] map[ctime:1.571545269e+09 group_id:1 group_name:aliyun id:4 ip:192.168.1.2 name:test1 ssh_port:9527] map[ctime:1.571541399e+09 group_id:1 group_name:aliyun id:3 ip:192.168.1.1 name:test01 ssh_port:22] map[ctime:1.57140845e+09 group_id:3 group_name:vrtul id:2 ip:vps.wangke.co name:vrtest ssh_port:9527] map[ctime:1.571408398e+09 group_id:1 group_name:aliyun id:1 ip:gogs.wangke.co name:alitest ssh_port:9527]]
+5
 ```
 添加如下:
 ![](https://pic.fenghong.tech/syncd-cli.png)
@@ -117,3 +164,6 @@ $ syncd-cli --add user -i test@wangke.co -n test01
 - [x] list server
 - [x] list user
 - [ ] list project
+- [x] read server info from file
+- [x] read user info from file
+
