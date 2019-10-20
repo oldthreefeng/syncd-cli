@@ -2,7 +2,7 @@
 Copyright 2019 louis.
 @Time : 2019/10/20 10:00
 @Author : louis
-@File : api-cli
+@File : syncd-cli
 @Software: GoLand
 
 */
