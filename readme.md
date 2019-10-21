@@ -59,6 +59,14 @@ Options:
   -s, --sshPort ints      set sshPort to the cluster server, use ',' to split
   -u, --user string       user for syncd tools (default "syncd")
 
+```
+
+### @v1.1.0
+
+从命令行读取批量文件的信息,感觉太冗余了, 不方便创建,还是以文件的方式创建批量容易一点,
+所用想了一个从文件里面读取信息,然后根据信息创建相应资源的方法.
+
+```
 @v1.1.0  
 $ go run syncd-cli.go -h
 syncd-cli version:1.1.0
@@ -84,7 +92,65 @@ Options:
 ```
 
 
+**file文件的格式**
+
+`testserver`,`testuser`等文件名称无要求, 但是对文件的格式要求.以一个空格进行分割.
+
+```shell
+# 第一列是groupid,对应的集群id;
+# 第二列是name, 对应的是server的名字
+# 第三列是ip/hostname, 对应server的ip或者域名
+# 第四列是sshport, 对应的是server的ssh端口
+$ cat testserver
+1 test01 test.wangke.co 22
+1 test02 test01.wangke.co 9527
+1 test03 test02.wangke.co 6822
+```
+`testuser`文件内容以空格区分,共四列.(后续可以添加至6列,源码的user还有电话号码,真实姓名等,非必须 批量创建的默认密码为`111111`)
+
+```shell
+# 第一列是role_id, 对应的是角色, 比如1是管理员
+# 第二列是name, 对应的是用户名
+# 第三列是email, 对应的是用户的邮箱
+# 第四列是status, 对应的是用户能否登陆.
+$ cat testuser
+1 test01 test01@wangke.co 1
+1 test02 test02@wangke.co 1
+
+```
+
+因为`testuser`和`testserver`的的文件格式和数据类型是一样的, 所用到的方法是一样的, 唯一的区分就是利用`apply user`还是`apply server`
+
+```go
+type server struct {
+    id int
+    name string
+    ip string
+    port int
+}
+
+type user struct {
+	id int
+	name string
+	email string
+	status int
+}
+
+```
+### 重要提醒
+```
+
+方法是一样的. 所以标志位很重要, 不然创建错了就是连环错误了.
+
+$ syncd-cli apply user -f testuser
+$ syncd-cli apply server -f testserver
+```
+
+
+
 ## example
+### @v1.0.0
+
 ```shell
 root@master-louis: ~/go/src/github.com/oldthreefeng/syncd-cli master ⚡
 # ./syncd-cli -i 192.168.1.2,text.example.com -n test1,texte -s 9527,22              [12:18:58]
@@ -99,7 +165,11 @@ $./syncd-cli -d user -i text@wangke.co -n test01
 time="2019-10-20T17:59:08+08:00" level=info msg="your token is under .syncd-token\n"
 time="2019-10-20T17:59:08+08:00" level=info msg="role_id=1&username=test01&password=1111111&email=text@wangke.co&status=1"
 time="2019-10-20T17:59:08+08:00" level=info msg="{\"code\":0,\"message\":\"success\"}"
+```
 
+### @v1.1.0
+
+```
 @v1.1.0
 # 采用从文件读取方式创建server
 $ go run syncd-cli.go apply server -f test.log
@@ -134,7 +204,7 @@ $ go run syncd-cli.go get server
 
 本来想开发和`kubectl`,`go`,`kubeadm`等类似的管理cli. 奈何时间水平有限. 
 
-脑子里想的是这样的
+脑子里想的是这样的@v1.1.0实现的比较简陋
 
 ```cgo
 $ syncd get user 
@@ -159,11 +229,11 @@ $ syncd-cli --add user -i test@wangke.co -n test01
 首先, 登录验证, 获取token, 将token存入当前目录下的`.syncd-token`, 其次, 获取user/server列表或者添加user/server, 逻辑都是一样的,发送`POST`请求, 同时携带cookie, 将cookie的`name`和`value`封装成`http.cookie`, 每次需要用到,直接调用即可. 
 
 ## TODO
-- [x] add server
-- [x] add user
+- [x] add server from cli
+- [x] add user from cli
 - [x] list server
 - [x] list user
 - [ ] list project
-- [x] read server info from file
-- [x] read user info from file
+- [x] add server info from file
+- [x] add user info from file
 
